@@ -1,5 +1,6 @@
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.PrintWriter;
 import java.util.Scanner;
 import javax.imageio.ImageIO;
 
@@ -11,7 +12,7 @@ import javax.imageio.ImageIO;
 public final class ImageToText
 {
     // From the darkest pixel to the brightest one.
-    private static final char[] SHADE = "#@&$x+- ".toCharArray();
+    private static final char[] SHADE = "@%Xx+~- ".toCharArray();
 
     private ImageToText() throws InstantiationException
     {
@@ -58,6 +59,25 @@ public final class ImageToText
     private static int getBlue(int pixel)
     {
         return pixel << 24 >>> 24;
+    }
+
+    // Gets the brightest pixel.
+    private static int getBrightestPixel(int[][] brightnessMap)
+    {
+        int brightestPixel = 0;
+
+        for (int[] row : brightnessMap)
+        {
+            for (int pixel : row)
+            {
+                if (brightestPixel < pixel)
+                {
+                    brightestPixel = pixel;
+                }
+            }
+        }
+
+        return brightestPixel;
     }
 
     /**
@@ -110,13 +130,13 @@ public final class ImageToText
         int width = bufferedImage.getWidth();
         int height = bufferedImage.getHeight();
         int[] pixels = toPixels(bufferedImage);
-        int[][] brightnessMap = new int[width][height];
+        int[][] brightnessMap = new int[height][width];
 
         for (int y = 0; y < height; ++y)
         {
             for (int x = 0; x < width; ++x)
             {
-                int currentPixel = pixels[y * height + x];
+                int currentPixel = pixels[y * width + x];
                 int alpha = getAlpha(currentPixel);
                 int red = getRed(currentPixel);
                 int green = getGreen(currentPixel);
@@ -142,8 +162,22 @@ public final class ImageToText
     {
         BufferedImage bufferedImage = ImageIO.read(new File(source));
         int[][] brightnessMap = getBrightnessMap(bufferedImage);
+        int brightestPixel = getBrightestPixel(brightnessMap);
 
-        // To be continued.
+        try (PrintWriter writer = new PrintWriter(destination))
+        {
+            for (int[] row : brightnessMap)
+            {
+                for (int pixel : row)
+                {
+                    int shadeIndex = pixel * SHADE.length / (brightestPixel + 1);
+
+                    writer.print(SHADE[shadeIndex]);
+                }
+
+                writer.println();
+            }
+        }
     }
 
     /**
@@ -177,7 +211,7 @@ public final class ImageToText
         }
         catch (Exception exception)
         {
-            System.err.println("An error has occurred: " + exception);
+            System.err.println("An error has occurred: " + exception.getMessage());
         }
     }
 }
