@@ -12,7 +12,7 @@ import javax.imageio.ImageIO;
 public final class ImageToText
 {
     // From the darkest pixel to the brightest one.
-    private static final char[] SHADE = "@%Xx+~- ".toCharArray();
+    private static char[] shades = "@%Xx+~- ".toCharArray();
 
     private ImageToText() throws InstantiationException
     {
@@ -170,9 +170,9 @@ public final class ImageToText
             {
                 for (int pixel : row)
                 {
-                    int shadeIndex = pixel * SHADE.length / (brightestPixel + 1);
+                    int shadeIndex = pixel * shades.length / (brightestPixel + 1);
 
-                    writer.print(SHADE[shadeIndex]);
+                    writer.print(shades[shadeIndex]);
                 }
 
                 writer.println();
@@ -188,9 +188,25 @@ public final class ImageToText
     public static void main(String[] args)
     {
         try
-        {           
-            if (args != null && args.length == 2)
+        {
+            if (args != null && args.length >= 2)
             {
+                // Handles additional commands.
+                for (int argIndex = 2; argIndex < args.length; ++argIndex)
+                {
+                    // Gets the command.
+                    String command = args[argIndex].toLowerCase();
+
+                    switch (command)
+                    {
+                        // Inverts the colors.
+                        case "invert":
+                            shades = new StringBuilder(new String(shades)).reverse().toString().toCharArray();
+
+                            break;
+                    }
+                }
+
                 // The two file paths have been provided as command line arguments.
                 convert(args[0], args[1]);
             }
